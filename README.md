@@ -1,12 +1,20 @@
 # Polaroid Fanart Gallery
 
-A StreamElements overlay widget that shows fan art as polaroid photos pinned to a
-corkboard. Pictures rotate on a timer and drop onto the board with a little bounce. Every
-polaroid credits the artist on its white strip. You
-manage all the art from the widget's own settings panel in StreamElements. There's no
-separate website and no accounts to set up.
+A custom widget for StreamElements overlays (shown in OBS) that pins rotating fan art to
+the stream as polaroid photos, each crediting its artist. Every new polaroid lands in a
+random spot without covering the others (or within an overlap limit you set), stays out of
+keep-out zones such as the chat box, and the polaroids shrink just enough to fit when the
+box is tight.
 
-<!-- TODO: screenshot or GIF of the widget on stream: docs/screenshots/result.gif -->
+![Six polaroids scattered on a corkboard, each with the artist's credit on its white strip](docs/screenshots/result.png)
+
+*Six polaroids in the local preview, using the sample art in [preview/samples/](preview/samples/).
+The corkboard is the preview's background. On stream the widget is transparent, so the
+polaroids sit on your own scene.*
+
+Pictures rotate on a timer and drop in with a little bounce. You manage all the art from the
+widget's own settings panel in StreamElements. There's no separate website and no accounts
+to set up.
 
 Version **1.1.0**. The full design spec is in
 [polaroid-fanart-widget-spec.md](polaroid-fanart-widget-spec.md).
@@ -29,7 +37,6 @@ Version **1.1.0**. The full design spec is in
    | JS     | [widget/widget.js](widget/widget.js) |
    | FIELDS | [widget/fields.json](widget/fields.json) |
 
-   <!-- TODO: one screenshot per tab in docs/screenshots/ -->
 5. Click **Done**, then **Save** the overlay.
 
 ## Position and size
@@ -58,6 +65,8 @@ Up to 3 rectangles inside the widget box where polaroids won't land. Set them in
 3. While you're in the StreamElements editor (or with the debug panel on), each zone shows
    as a red dashed box, so you can line it up with your chat or text. The outlines never
    show on stream.
+
+![Five polaroids on the left two-thirds of the box, with a red dashed keep-out zone covering the right third](docs/screenshots/keep-out-zone.png)
 
 **How much of a polaroid may cover a zone (%)** sets how strict the zones are. 0 = never
 touch a zone. 20 = up to a fifth of a polaroid may poke into a zone. The limit counts the
