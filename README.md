@@ -8,7 +8,7 @@ separate website and no accounts to set up.
 
 <!-- TODO: screenshot or GIF of the widget on stream: docs/screenshots/result.gif -->
 
-Version **1.0.0**. The full design spec is in
+Version **1.1.0**. The full design spec is in
 [polaroid-fanart-widget-spec.md](polaroid-fanart-widget-spec.md).
 
 ---
@@ -45,6 +45,29 @@ Drag the widget box to where the polaroids should go, and resize it.
   full size, and any one polaroid may cover up to that share of another (newest on top).
   They can then partly cover each other's credits. If the box is too small to scatter
   them within the limit at full size, they shrink just enough to fit.
+
+### Keep-out zones (chat box, "starting soon" text…)
+
+Up to 3 rectangles inside the widget box where polaroids won't land. Set them in the
+**Keep-out zones** section:
+
+1. Tick **Zone 1: on**.
+2. Set its **left edge** and **top edge**, then its **width** and **height**. All four are
+   percentages of the widget box, so a zone stays in place when you resize the box.
+   For example, a chat column on the right third: left 67, top 0, width 33, height 100.
+3. While you're in the StreamElements editor (or with the debug panel on), each zone shows
+   as a red dashed box, so you can line it up with your chat or text. The outlines never
+   show on stream.
+
+**How much of a polaroid may cover a zone (%)** sets how strict the zones are. 0 = never
+touch a zone. 20 = up to a fifth of a polaroid may poke into a zone. The limit counts the
+polaroid's tilted outline at the tallest photo size, so in practice polaroids stay a bit
+clearer than the number says.
+
+Polaroids shrink if needed to fit the space that's left. A single polaroid that isn't set
+to land in a random spot moves from the center to the nearest clear spot. If there's still
+no room (huge zones, tiny box), the debug panel warns that the widget fell back to its grid,
+which ignores the zones.
 
 ## Filling a slot (adding art)
 
@@ -97,6 +120,7 @@ the missing credit gets noticed and fixed.
 | Pin style | Pushpin, two strips of tape, or nothing. |
 | Pushpin color | Color of the pushpin (only used with the Pushpin style). |
 | Shadow strength | How strong the drop shadow under each polaroid is. |
+| Keep-out zones | Up to 3 areas where polaroids won't land, plus how much a polaroid may cover them. See [Keep-out zones](#keep-out-zones-chat-box-starting-soon-text). |
 | Show debug panel | Shows a troubleshooting box on the widget. Leave it off on stream. |
 
 ## If the stream doesn't update
@@ -127,6 +151,7 @@ The widget picks up the new slots automatically. Slot numbers go up to 99.
 The version is listed on the first line of the debug panel. It matches `WIDGET_VERSION`
 at the top of [widget/widget.js](widget/widget.js).
 
+- **1.1.0**: keep-out zones. Re-paste the JS, CSS and FIELDS tabs. Your artwork stays.
 - **1.0.0**: first release.
 
 ---

@@ -150,6 +150,141 @@
     "value": false,
     "group": "Look & behavior"
   },
+  "zoneMaxOverlap": {
+    "type": "slider",
+    "label": "How much of a polaroid may cover a zone (%)",
+    "value": 0,
+    "min": 0,
+    "max": 100,
+    "step": 5,
+    "group": "Keep-out zones"
+  },
+  "zone1_enabled": {
+    "type": "checkbox",
+    "label": "Zone 1: on",
+    "value": false,
+    "group": "Keep-out zones"
+  },
+  "zone1_x": {
+    "type": "number",
+    "label": "Zone 1: left edge (% of box width)",
+    "value": 70,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone1_y": {
+    "type": "number",
+    "label": "Zone 1: top edge (% of box height)",
+    "value": 0,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone1_w": {
+    "type": "number",
+    "label": "Zone 1: width (% of box width)",
+    "value": 30,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone1_h": {
+    "type": "number",
+    "label": "Zone 1: height (% of box height)",
+    "value": 100,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone2_enabled": {
+    "type": "checkbox",
+    "label": "Zone 2: on",
+    "value": false,
+    "group": "Keep-out zones"
+  },
+  "zone2_x": {
+    "type": "number",
+    "label": "Zone 2: left edge (% of box width)",
+    "value": 0,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone2_y": {
+    "type": "number",
+    "label": "Zone 2: top edge (% of box height)",
+    "value": 0,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone2_w": {
+    "type": "number",
+    "label": "Zone 2: width (% of box width)",
+    "value": 100,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone2_h": {
+    "type": "number",
+    "label": "Zone 2: height (% of box height)",
+    "value": 20,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone3_enabled": {
+    "type": "checkbox",
+    "label": "Zone 3: on",
+    "value": false,
+    "group": "Keep-out zones"
+  },
+  "zone3_x": {
+    "type": "number",
+    "label": "Zone 3: left edge (% of box width)",
+    "value": 30,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone3_y": {
+    "type": "number",
+    "label": "Zone 3: top edge (% of box height)",
+    "value": 40,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone3_w": {
+    "type": "number",
+    "label": "Zone 3: width (% of box width)",
+    "value": 40,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
+  "zone3_h": {
+    "type": "number",
+    "label": "Zone 3: height (% of box height)",
+    "value": 20,
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "group": "Keep-out zones"
+  },
   "slot01_image": {
     "type": "image-input",
     "label": "Image",

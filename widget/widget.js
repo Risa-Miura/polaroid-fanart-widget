@@ -1,6 +1,6 @@
 /* Polaroid Fanart Gallery: StreamElements custom widget. Paste into the JS tab.
    The overlay has no console: diagnostics go to the on-screen debug panel instead. */
-const WIDGET_VERSION = '1.0.0';
+const WIDGET_VERSION = '1.1.0';
 
 // Used whenever a field is missing (older Fields JSON) or holds an unusable value.
 const SETTING_DEFAULTS = {
@@ -22,6 +22,7 @@ const SETTING_DEFAULTS = {
   pinStyle: 'pushpin',
   pinColor: '#d7263d',
   shadowStrength: 60,
+  zoneMaxOverlap: 0,
   debugPanel: false,
 };
 
@@ -44,6 +45,11 @@ const LAYOUT_TRIES = 20;
 const SPOT_GAP = 8;
 // With overlap allowed: scale factor per step when no layout respects the limit.
 const SHRINK_STEP = 0.92;
+
+// Keep-out zones: polaroids may shrink down to this share of the grid size to stay clear of
+// them; a lone, non-random polaroid searches this many steps per axis for a clear spot.
+const ZONE_MIN_SCALE = 0.5;
+const CENTRE_SEARCH_STEPS = 40;
 
 // Wall mode: how much exit and entry overlap.
 const WALL_OVERLAP = 0.3;
@@ -82,6 +88,7 @@ function start(fieldData) {
     spots: [],
     lastReplaced: null,
     box: null,
+    zoneRects: [],
     scale: 1,
     gridFallback: false,
     busy: false,
@@ -99,6 +106,7 @@ function start(fieldData) {
   r.els.gallery.textContent = '';
   r.els.gallery.className = `pin-${settings.pinStyle}`;
   applyCssVars(settings);
+  renderZones(r);
   detectEditorMode(r);
 
   if (r.count > 0) {
@@ -143,6 +151,7 @@ function detectEditorMode(r) {
       .then((status) => {
         if (r !== run) return;
         r.editorMode = !!(status && status.isEditorMode);
+        renderZones(r);
         renderDebug(r);
       })
       .catch(() => {});
@@ -202,9 +211,34 @@ function readSettings(fd) {
     pinStyle: pick('pinStyle', ['pushpin', 'tape', 'none']),
     pinColor: str('pinColor'),
     shadowStrength: num('shadowStrength', 0, 100),
+    zoneMaxOverlap: num('zoneMaxOverlap', 0, 100),
+    zones: readZones(fd),
     debugPanel: bool('debugPanel'),
     missing,
   };
+}
+
+// Keep-out zones, in % of the widget box. Discovered by key pattern like the slots; a zone
+// counts only when it is switched on and has a size.
+function readZones(fd) {
+  const pct = (v) => {
+    const n = v === '' || v === null ? NaN : Number(v);
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+  };
+  return Object.keys(fd)
+    .map((key) => /^zone(\d+)_enabled$/.exec(key))
+    .filter(Boolean)
+    .map((m) => m[1])
+    .sort((a, b) => Number(a) - Number(b))
+    .filter((n) => fd[`zone${n}_enabled`] === true || fd[`zone${n}_enabled`] === 'true')
+    .map((n) => ({
+      zone: n,
+      x: pct(fd[`zone${n}_x`]),
+      y: pct(fd[`zone${n}_y`]),
+      w: pct(fd[`zone${n}_w`]),
+      h: pct(fd[`zone${n}_h`]),
+    }))
+    .filter((z) => z.w > 0 && z.h > 0);
 }
 
 // Slots are discovered by key pattern, never by a hardcoded count, so adding slots
@@ -387,6 +421,8 @@ function layout(r) {
   const { clientWidth: width, clientHeight: height } = r.els.gallery;
   if (!width || !height) return;
   r.box = { width, height };
+  r.zoneRects = zoneRects(r);
+  const hasZones = r.zoneRects.length > 0;
   const fp = footprint(r.settings);
   const rects = cellRects(r.count, width, height);
   // At this scale the grid cells never overlap, so the grid fallback always respects the limit.
@@ -399,28 +435,84 @@ function layout(r) {
   } else {
     scale = gridScale;
     if (r.count > 1) {
-      scale = Math.min(scale, Math.sqrt((MAX_COVERAGE * width * height) / (r.count * fp.w * fp.h)));
+      scale = Math.min(scale, Math.sqrt((MAX_COVERAGE * freeArea(r)) / (r.count * fp.w * fp.h)));
     }
   }
 
-  // With overlap allowed, shrink step by step until a random layout respects the limit,
-  // down to the grid scale.
+  // Shrink step by step until a layout respects the overlap limits: down to the grid scale
+  // with overlap allowed, further with keep-out zones (the grid ignores them).
+  const canShrink = hasZones || (overlapAllowed && randomizesSpots(r));
+  const minScale = hasZones ? gridScale * ZONE_MIN_SCALE : gridScale;
   let positions = null;
   for (;;) {
     r.scale = scale;
     r.spotSize = { w: fp.w * scale, h: fp.h * scale };
-    for (let t = 0; t < LAYOUT_TRIES && !positions && randomizesSpots(r); t++) {
-      positions = randomLayout(r);
+    if (randomizesSpots(r)) {
+      for (let t = 0; t < LAYOUT_TRIES && !positions; t++) positions = randomLayout(r);
+    } else {
+      const pos = centredSpot(r);
+      positions = pos && [pos];
     }
-    if (positions || !randomizesSpots(r) || !overlapAllowed || scale <= gridScale) break;
-    scale = Math.max(gridScale, scale * SHRINK_STEP);
+    if (positions || !canShrink || scale <= minScale) break;
+    scale = Math.max(minScale, scale * SHRINK_STEP);
   }
-  r.gridFallback = !positions && randomizesSpots(r);
+  r.gridFallback = !positions;
   if (!positions) positions = rects.map((c) => ({ x: c.x + c.w / 2, y: c.y + c.h / 2 }));
   r.spots.forEach((spot, i) => {
     spot.pos = positions[i];
     if (spot.current) positionMount(r, spot.current, spot.pos);
   });
+}
+
+// Zones in px, clipped to the box.
+function zoneRects(r) {
+  const { width, height } = r.box;
+  return r.settings.zones.map((z) => {
+    const x = (z.x / 100) * width;
+    const y = (z.y / 100) * height;
+    return { x, y, w: Math.min(width - x, (z.w / 100) * width), h: Math.min(height - y, (z.h / 100) * height) };
+  });
+}
+
+// Box area the polaroids can use, for sizing. Zones that overlap each other are counted
+// twice, which only errs towards smaller polaroids.
+function freeArea(r) {
+  const { width, height } = r.box;
+  const blocked = r.zoneRects.reduce((sum, z) => sum + z.w * z.h, 0) * (1 - r.settings.zoneMaxOverlap / 100);
+  return Math.max(0.1 * width * height, width * height - blocked);
+}
+
+// No zone has more than zoneMaxOverlap % of a polaroid's footprint at `pos` inside it.
+function clearOfZones(r, pos) {
+  const { w, h } = r.spotSize;
+  const maxArea = (r.settings.zoneMaxOverlap / 100) * w * h;
+  const along = (p, size, start, length) =>
+    Math.max(0, Math.min(p + size / 2, start + length) - Math.max(p - size / 2, start));
+  return r.zoneRects.every((z) => along(pos.x, w, z.x, z.w) * along(pos.y, h, z.y, z.h) <= maxArea);
+}
+
+// A lone polaroid that doesn't move around: the box centre, or else the clear spot closest
+// to it (a fixed scan, so it stays put between layouts).
+function centredSpot(r) {
+  const { width, height } = r.box;
+  const { w, h } = r.spotSize;
+  const centre = { x: width / 2, y: height / 2 };
+  if (clearOfZones(r, centre)) return centre;
+  const step = (size, room, k) =>
+    room > size ? size / 2 + (k / CENTRE_SEARCH_STEPS) * (room - size) : room / 2;
+  let best = null;
+  let bestDist = Infinity;
+  for (let i = 0; i <= CENTRE_SEARCH_STEPS; i++) {
+    for (let j = 0; j <= CENTRE_SEARCH_STEPS; j++) {
+      const pos = { x: step(w, width, i), y: step(h, height, j) };
+      const dist = Math.hypot(pos.x - centre.x, pos.y - centre.y);
+      if (dist < bestDist && clearOfZones(r, pos)) {
+        best = pos;
+        bestDist = dist;
+      }
+    }
+  }
+  return best;
 }
 
 function randomLayout(r) {
@@ -433,9 +525,9 @@ function randomLayout(r) {
   return positions;
 }
 
-// A random centre point where a polaroid fits in the box and no polaroid in `taken` covers
-// more than maxOverlap % of it (all footprints are the same size, so this is symmetric).
-// At 0 %, a small gap is kept instead.
+// A random centre point where a polaroid fits in the box, no polaroid in `taken` covers
+// more than maxOverlap % of it (all footprints are the same size, so this is symmetric) and
+// it stays clear of the keep-out zones. At 0 % maxOverlap, a small gap is kept instead.
 function freeSpot(r, taken) {
   const { width, height } = r.box;
   const { w, h } = r.spotSize;
@@ -449,7 +541,7 @@ function freeSpot(r, taken) {
   const along = (size, room) => (room > size ? size / 2 + Math.random() * (room - size) : room / 2);
   for (let i = 0; i < SPOT_TRIES; i++) {
     const pos = { x: along(w, width), y: along(h, height) };
-    if (taken.every((p) => fits(p, pos))) return pos;
+    if (taken.every((p) => fits(p, pos)) && clearOfZones(r, pos)) return pos;
   }
   return null;
 }
@@ -655,6 +747,20 @@ async function tick() {
 
 // ---------- Diagnostics ----------
 
+// Dashed outlines of the keep-out zones, to line them up in the overlay editor.
+function renderZones(r) {
+  r.els.gallery.querySelectorAll('.zone-outline').forEach((el) => el.remove());
+  if (!(r.settings.debugPanel || r.editorMode)) return;
+  r.settings.zones.forEach((z) => {
+    const el = div('zone-outline', `keep-out zone ${z.zone}`);
+    el.style.left = `${z.x}%`;
+    el.style.top = `${z.y}%`;
+    el.style.width = `${Math.min(z.w, 100 - z.x)}%`;
+    el.style.height = `${Math.min(z.h, 100 - z.y)}%`;
+    r.els.gallery.appendChild(el);
+  });
+}
+
 function logEvent(r, message) {
   const time = new Date().toTimeString().slice(0, 8);
   r.events.unshift(`${time} ${message}`);
@@ -679,7 +785,9 @@ function renderDebug(r) {
   if (r.scale < 1) {
     warnings.push(`Widget box too small: polaroids scaled down to ${Math.round(r.scale * 100)}%`);
   }
-  if (r.gridFallback) {
+  if (r.gridFallback && s.zones.length) {
+    warnings.push('No layout keeps clear of the keep-out zones: using the grid, which ignores them (enlarge the box, shrink the zones or raise zone overlap)');
+  } else if (r.gridFallback) {
     warnings.push('No random layout fits: using the grid (enlarge the box or raise max overlap)');
   }
 
@@ -693,6 +801,7 @@ function renderDebug(r) {
     `Active slots: ${r.artworks.length}${noArt ? '' : ` (${r.artworks.map((a) => a.slot).join(', ')})`}`,
     countLine,
     `Queue: ${r.queue.position()} (${s.orderMode === 'shuffle' ? 'shuffle' : 'slot order'}, replace ${s.replaceMode})`,
+    `Keep-out zones: ${s.zones.length ? `${s.zones.map((z) => z.zone).join(', ')} (max ${s.zoneMaxOverlap}% overlap)` : 'none'}`,
     `Failed loads: ${r.failedSlots.size ? Array.from(r.failedSlots).join(', ') : 'none'}`,
     'Last events:',
     ...(r.events.length ? r.events.map((e) => `  ${e}`) : ['  (none yet)']),
