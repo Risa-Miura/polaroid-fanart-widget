@@ -1,34 +1,27 @@
-# Polaroid Fanart Gallery
+# Polaroid Fanart Gallery 📸
 
-A custom widget for StreamElements overlays (shown in OBS) that pins rotating fan art to
-the stream as polaroid photos, each crediting its artist. Every new polaroid lands in a
-random spot without covering the others (or within an overlap limit you set), stays out of
-keep-out zones such as the chat box, and the polaroids shrink just enough to fit when the
-box is tight.
+A StreamElements overlay widget that shows fan art on stream as little polaroids, with the
+artist credited on each one. New polaroids drop into random spots without covering each
+other, and you can mark areas (like the chat box) where they shouldn't land.
 
 ![Six polaroids scattered on a corkboard, each with the artist's credit on its white strip](docs/screenshots/result.png)
 
-*Six polaroids in the local preview, using the sample art in [preview/samples/](preview/samples/).
-The corkboard is the preview's background. On stream the widget is transparent, so the
-polaroids sit on your own scene.*
+That's the local preview with the sample art. The corkboard is just the preview background;
+on stream the widget is transparent, so the polaroids sit on top of your own scene.
 
-Pictures rotate on a timer and drop in with a little bounce. You manage all the art from the
-widget's own settings panel in StreamElements. There's no separate website and no accounts
-to set up.
+The art rotates on a timer and each picture drops in with a little bounce. Everything is
+managed from the widget's settings panel in StreamElements, so there's no extra website or
+account to set up.
 
-Version **1.1.0**. The full design spec is in
+Current version is 1.1.0. The full design spec is in
 [polaroid-fanart-widget-spec.md](polaroid-fanart-widget-spec.md).
-
----
 
 ## Install
 
-1. In StreamElements, go to **Streaming tools → Overlays**. Open your overlay (or create one).
+1. In StreamElements, go to **Streaming tools → Overlays** and open your overlay (or make a new one).
 2. Click **+ (Add widget) → Static / Custom → Custom widget**.
 3. Select the new widget and click **Open editor**.
-4. The editor has tabs called **HTML**, **CSS**, **JS** and **FIELDS**. For each one, open
-   the matching file from this repo, select everything, copy it, and paste it into the tab
-   in place of what's already there:
+4. The editor has four tabs. Paste each file from this repo into its tab, replacing what's there:
 
    | Editor tab | File |
    |------------|------|
@@ -41,147 +34,124 @@ Version **1.1.0**. The full design spec is in
 
 ## Position and size
 
-Drag the widget box to where the polaroids should go, and resize it.
+Drag and resize the widget box to wherever you want the polaroids.
 
-- With **1 polaroid**, it sits centered in the box. Tick **Single polaroid: land in a
-  random spot** to make each new artwork land somewhere new in the box instead.
-- With **2–6 polaroids**, each new polaroid lands in a random free spot in the box and
-  never covers another one. Make the box big enough: the polaroids shrink so there's
-  always room to scatter them.
-- Raise **Max overlap between polaroids (%)** for a messier corkboard: polaroids keep their
-  full size, and any one polaroid may cover up to that share of another (newest on top).
-  They can then partly cover each other's credits. If the box is too small to scatter
-  them within the limit at full size, they shrink just enough to fit.
+With 1 polaroid, it sits in the middle of the box. Tick **Single polaroid: land in a random
+spot** if you'd rather it move around.
 
-### Keep-out zones (chat box, "starting soon" text…)
+With 2–6 polaroids, each new one lands in a random free spot and never covers another. If
+the box is small they shrink to make room, so give it some space. If you want a messier
+board, raise **Max overlap between polaroids (%)**: they stay full size and can cover up to
+that much of each other (newest on top), which can hide part of a credit. If they still
+don't fit, they shrink just enough.
 
-Up to 3 rectangles inside the widget box where polaroids won't land. Set them in the
-**Keep-out zones** section:
+### Keep-out zones
 
-1. Tick **Zone 1: on**.
-2. Set its **left edge** and **top edge**, then its **width** and **height**. All four are
-   percentages of the widget box, so a zone stays in place when you resize the box.
-   For example, a chat column on the right third: left 67, top 0, width 33, height 100.
-3. While you're in the StreamElements editor (or with the debug panel on), each zone shows
-   as a red dashed box, so you can line it up with your chat or text. The outlines never
-   show on stream.
+You can set up to 3 rectangles where polaroids won't land, for things like your chat box or
+"starting soon" text. In the **Keep-out zones** section, tick **Zone 1: on**, then set its
+left edge, top edge, width and height. They're all percentages of the widget box, so the
+zone stays put if you resize the box. A chat column on the right third would be left 67,
+top 0, width 33, height 100.
+
+In the StreamElements editor (or with the debug panel on), each zone shows up as a red
+dashed box so you can line it up. It never shows on stream.
 
 ![Five polaroids on the left two-thirds of the box, with a red dashed keep-out zone covering the right third](docs/screenshots/keep-out-zone.png)
 
-**How much of a polaroid may cover a zone (%)** sets how strict the zones are. 0 = never
-touch a zone. 20 = up to a fifth of a polaroid may poke into a zone. The limit counts the
-polaroid's tilted outline at the tallest photo size, so in practice polaroids stay a bit
-clearer than the number says.
+**How much of a polaroid may cover a zone (%)** controls how strict they are: 0 means never
+touch a zone, 20 means up to a fifth of a polaroid can poke in. It measures the tilted
+polaroid at the tallest photo size, so in practice they stay a bit clearer than the number.
 
-Polaroids shrink if needed to fit the space that's left. A single polaroid that isn't set
-to land in a random spot moves from the center to the nearest clear spot. If there's still
-no room (huge zones, tiny box), the debug panel warns that the widget fell back to its grid,
-which ignores the zones.
+Polaroids shrink if they need to. A single centered polaroid moves to the nearest clear
+spot. If there's really no room (huge zones, tiny box), the widget falls back to a grid that
+ignores the zones, and the debug panel tells you.
 
-## Filling a slot (adding art)
+## Adding art
 
-The settings panel has 24 sections called **Artwork 01** to **Artwork 24**. Each one holds
-one piece of art.
+The settings panel has 24 slots, **Artwork 01** to **Artwork 24**, one piece of art each.
 
-1. Expand **Artwork 01** (or the next empty one).
-2. Click **Image** and upload the picture. Use **PNG or JPG**, under 30 MB. A long side of
-   1000–2000 px is plenty.
-3. Type the **Artist name**.
-4. Type their **Handle** however you like it to appear, e.g. `@name on X` or
-   `name.bsky.social`.
-5. Optionally add a **Caption**. It goes on the first line of the strip.
-6. Leave **Show this artwork** ticked.
-7. Click **Save**.
+1. Open the next empty slot.
+2. Click **Image** and upload a PNG or JPG under 30 MB. 1000–2000 px on the long side is plenty.
+3. Fill in the **Artist name** and their **Handle**, written however you want it to show
+   (`@name on X`, `name.bsky.social`, …).
+4. Add a **Caption** if you want one. It goes on the first line of the strip.
+5. Leave **Show this artwork** ticked and click **Save**.
 
-Repeat for each piece of art. Empty slots are ignored.
+Empty slots are skipped. To hide a piece without deleting it, untick **Show this artwork**.
+To replace one, upload a new image to the same slot and update the credit. In slot order
+mode, you change the order by swapping what's in two slots.
 
-Emoji are fine in names, handles and captions. They show as simple one-color symbols in
-the caption text color, to match the handwritten look. When the name and handle don't fit
-on one line, the handle moves to its own line, and very long ones get smaller rather than
-cut off.
+Emoji work in names, handles and captions (they show as one-color symbols to match the
+handwriting). Long names push the handle onto its own line and get smaller instead of being
+cut off. If a slot has no name or handle, the polaroid says `art by ?` so you notice.
 
-- **Hide a piece** without deleting it: untick **Show this artwork**.
-- **Replace a piece**: upload a new image into the same slot and update the credit.
-- **Change the order** (in "Slot order" mode): swap the contents of two slots.
-
-If both name and handle are empty, the polaroid says `art by ?` (or just `?`) on stream so
-the missing credit gets noticed and fixed.
-
-## Look & behavior settings
+## Settings
 
 | Setting | What it does |
 |---------|--------------|
-| Polaroids on screen | 1 = a single polaroid. 2–6 = a scattered wall that swaps out one polaroid each time. |
-| Single polaroid: land in a random spot | With 1 polaroid, each new artwork lands in a random spot instead of the center. |
-| Max overlap between polaroids (%) | With 2–6 polaroids: 0 = they never cover each other (and shrink to make room). Above 0 = full size when there's room, and one polaroid may cover up to this share of another, newest on top. 100 = no limit. |
-| Polaroid width (px) | How wide each polaroid is. Everything else (text, pin, frame) scales with it. |
-| Max photo height (px) | Tallest the photo part can be. Very tall art gets frame-colored bars at the sides instead of being cut off. |
+| Polaroids on screen | 1 = a single polaroid. 2–6 = a scattered wall that swaps one out each time. |
+| Single polaroid: land in a random spot | With 1 polaroid, each new one lands somewhere random instead of the center. |
+| Max overlap between polaroids (%) | With 2–6 polaroids: 0 = no overlap (they shrink to make room). Higher = full size when there's room, and one can cover up to this much of another. 100 = no limit. |
+| Polaroid width (px) | How wide each polaroid is. Text, pin and frame scale with it. |
+| Max photo height (px) | Tallest the photo can be. Very tall art gets frame-colored bars on the sides instead of being cropped. |
 | Seconds per artwork | How often the art changes. |
 | Transition length (seconds) | How long the drop-in and fall-away animations take. |
-| Order | **Shuffle** shows every piece once, in random order, before repeating. **Slot order** goes 01, 02, 03… |
-| Which polaroid changes | With 2–6 polaroids: **Oldest first** swaps the one that's been up longest. **Random** swaps any one, but never the same spot twice in a row. |
-| Max tilt (degrees) | How crooked the polaroids can hang. 0 = perfectly straight. |
+| Order | Shuffle shows every piece once in random order before repeating. Slot order goes 01, 02, 03… |
+| Which polaroid changes | With 2–6 polaroids: Oldest first swaps the one that's been up longest. Random swaps any of them, but not the same spot twice in a row. |
+| Max tilt (degrees) | How crooked they hang. 0 = straight. |
 | Frame color | Color of the polaroid paper. |
 | Caption font | Font for the caption and credit (any Google Font). |
-| Caption text color | Color of the caption and credit text. |
-| Show artist handle | Untick to show only the artist's name. |
-| Text before artist name | The words in front of the credit, `art by` by default. Change it (e.g. `drawn by`) or clear it to show just the name. |
+| Caption text color | Color of the caption and credit. |
+| Show artist handle | Untick to show just the name. |
+| Text before artist name | `art by` by default. Change it (`drawn by`) or clear it. |
 | Pin style | Pushpin, two strips of tape, or nothing. |
-| Pushpin color | Color of the pushpin (only used with the Pushpin style). |
-| Shadow strength | How strong the drop shadow under each polaroid is. |
-| Keep-out zones | Up to 3 areas where polaroids won't land, plus how much a polaroid may cover them. See [Keep-out zones](#keep-out-zones-chat-box-starting-soon-text). |
-| Show debug panel | Shows a troubleshooting box on the widget. Leave it off on stream. |
+| Pushpin color | Only used with the pushpin style. |
+| Shadow strength | How strong the drop shadow is. |
+| Keep-out zones | Up to 3 areas polaroids avoid, plus how much they can cover them. See [Keep-out zones](#keep-out-zones). |
+| Show debug panel | A troubleshooting box on the widget. Keep it off on stream. |
 
 ## If the stream doesn't update
 
-Saving the overlay normally updates OBS by itself. If it doesn't:
-
-1. In OBS, select the browser source for the overlay, then click
-   **Refresh cache of current page** (in the source's properties).
-2. Still stuck? In the StreamElements editor, tick **Show debug panel** and save. The box
-   lists the active slots, recent events (for example images that failed to load) and any
-   warnings.
+Saving the overlay usually updates OBS on its own. If it doesn't, open the overlay's browser
+source properties in OBS and click **Refresh cache of current page**. Still stuck? Turn on
+**Show debug panel** and save. It lists the active slots, recent events (like images that
+failed to load) and any warnings.
 
 ## Adding more slots
 
-1. Open [widget/fields.json](widget/fields.json) and find the five lines for `Artwork 24`
-   (`slot24_image` … `slot24_show`).
-2. Copy them and paste them right below, adding a comma after the previous last line.
-3. In the pasted lines, change every `24` to `25`, both in the keys (`slot25_image`) and
-   in the group name (`"Artwork 25"`).
-4. Check the file with any JSON validator. One stray comma makes StreamElements show an
-   empty panel.
-5. Paste the whole file into the FIELDS tab again. Your existing uploads stay.
+1. In [widget/fields.json](widget/fields.json), find the five `slot24_…` entries for `Artwork 24`.
+2. Copy them right below, with a comma after the previous last line.
+3. Change every `24` to `25`, in the keys (`slot25_image`) and the group name (`"Artwork 25"`).
+4. Run it through a JSON validator. One stray comma and StreamElements shows an empty panel.
+5. Paste the whole file into the FIELDS tab again. Your uploads stay.
 
-The widget picks up the new slots automatically. Slot numbers go up to 99.
+The widget finds new slots on its own, up to slot 99.
 
-## Version and changelog
+## Changelog
 
-The version is listed on the first line of the debug panel. It matches `WIDGET_VERSION`
-at the top of [widget/widget.js](widget/widget.js).
+The version is on the first line of the debug panel and in `WIDGET_VERSION` at the top of
+[widget/widget.js](widget/widget.js).
 
-- **1.1.0**: keep-out zones. Re-paste the JS, CSS and FIELDS tabs. Your artwork stays.
-- **1.0.0**: first release.
+- 1.1.0: keep-out zones. Re-paste the JS, CSS and FIELDS tabs (your art stays).
+- 1.0.0: first release.
 
----
+## Running it locally
 
-## For developers
+There's no build step. The four files in [widget/](widget/) get pasted in as they are.
 
-No build step: the four files in [widget/](widget/) are pasted as-is.
-
-To iterate locally, serve the repo root with any static server and open the preview
-harness, which fakes the StreamElements runtime:
+To try changes, serve the repo root and open the preview page, which fakes the
+StreamElements runtime:
 
 ```sh
 py -m http.server 8000
 # then open http://localhost:8000/preview/preview.html
 ```
 
-The side panel mirrors the style fields and re-dispatches `onWidgetLoad` on every change.
-**Next** fires a rotation on demand. Field values can also be set from the URL, for example
-`preview.html?polaroidCount=6&pinStyle=tape`. Sample data lives in
-[preview/sample-fielddata.json](preview/sample-fielddata.json). It deliberately includes a
-hidden slot (09) and a broken image URL (10). Opening the page as a `file://` URL won't
-work, because the browser blocks the JSON fetch.
+The side panel has the style settings and reloads the widget on every change, and **Next**
+skips to the next artwork. You can also set fields in the URL, like
+`preview.html?polaroidCount=6&pinStyle=tape`. The sample data is in
+[preview/sample-fielddata.json](preview/sample-fielddata.json), and it includes a hidden
+slot (09) and a broken image link (10) on purpose. Opening the file directly (`file://`)
+doesn't work because the browser blocks the JSON fetch.
 
-The overlay has no `console`. Use the debug panel (`debugPanel` field) instead.
+The overlay has no `console`, so use the debug panel instead.
